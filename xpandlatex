@@ -639,21 +639,23 @@ class XpandLaTeX:
     citeOpenType = {'cite': '[', 
                     'citep': '(', 
                     'citet': '', 
-                    'citealt': ''}
+                    'citealt': '', 
+                    'citeauthor': ''}
     citeSepType = {'cite': ', ',
                    'citep': '; ',
                    'citet': ' and ',
-                   'citealt': '; '}
+                   'citealt': '; ', 
+                   'citeauthor': '; '}
     citeCloseType = {'cite': ']',
                      'citep': ')',
                      'citet': '',
-                     'citealt': ''}
-    citeCmdType = {'cite': r'\XPcite',
-                   'citep': r'\XPcitep',
-                   'citet': r'\XPcitet', 
-                   'citealt': r'\XPcitealt'}
-
-    # 
+                     'citealt': '',
+                     'citeauthor': ''}
+    citeMacroType = {'cite': r'\XPcite',
+                     'citep': r'\XPcitep',
+                     'citet': r'\XPcitet', 
+                     'citealt': r'\XPcitealt', 
+                     'citeauthor': r'\XPciteauthor'}
 
     def define_bibcite(self):
         die_msg = r"\bibcite syntax error: ";
@@ -723,7 +725,7 @@ class XpandLaTeX:
             if name in self.citeDefinition:
                 defn = self.citeDefinition[name];
                 self.debug('expanding cite <%s> to <%s>' % (name, str(defn)))
-                xpnd_tokens.append(self.citeCmdType[type])
+                xpnd_tokens.append(self.citeMacroType[type])
                 xpnd_tokens.extend(defn)
             else:
                 self.warn('unknown cite name <%s>' % name);
@@ -1026,13 +1028,13 @@ class XpandLaTeX:
 
         for tok in self.envBodyAction[name]:
         
-            if tok == r'\XPcopy':
+            if tok == r'%XPcopy':
                 self.push_tokens(body)
 
-            if tok == r'\XPdiscard':
+            if tok == r'%XPdiscard':
                 pass
 
-            if tok == r'\XPwritefile':
+            if tok == r'%XPwritefile':
                 filename = '%s_%d.tex' % (name, self.envUseCounter[name])
                 file = open(filename, 'w')
                 for tok in body:
@@ -1169,7 +1171,7 @@ class XpandLaTeX:
             elif len(tok) >= 3 and tok[0:2] == '%XP':
                 if tok == '%XP':        # just '%XP': ignore this token but process rest of line
                     pass
-                elif tok == '%XPcut': 	# gobble tokens to %XPTUC
+                elif tok == '%XPCUT': 	# gobble tokens to %XPTUC
                     self.get_tokens_to_match(['%XPTUC'], mode='all')
 
                 # comments
