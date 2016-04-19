@@ -190,7 +190,7 @@ class XpandLaTeX:
 
 
     # compile the token regular expression globally
-    tokenizer = re.compile('\\\\[a-zA-Z]+|\\\\[^a-zA-Z]|#[1-9#]|%XP[a-zA-z:]*|%.*\n|\s+|.|\n');
+    tokenizer = re.compile('\\\\[a-zA-Z]+|\\\\[^a-zA-Z]|#[1-9#]|%XP[a-zA-Z:]*|%.*\n|\s+|.|\n');
 
     def get_bare_token(self, read="any"):
     
@@ -987,7 +987,7 @@ class XpandLaTeX:
             if not tok == '{': self.die(die_msg + 'unexpected token <' + tok + '>')
             self.envBodyAction[name] = self.get_tokens_to_match(['}']);
         else:
-            self.envBodyAction[name] = ['\\XPcopy'] # default to copy
+            self.envBodyAction[name] = ['%XPcopy'] # default to copy
 
         self.debug('\tbody defn:' + str(self.envBodyAction[name]))
         self.envUseCounter[name] = 0
@@ -1168,12 +1168,14 @@ class XpandLaTeX:
                 self.read_contentsfile('lot')
 
                 # %XP tokens
-            elif len(tok) >= 3 and tok[0:2] == '%XP':
+            elif (len(tok) >= 3) and (tok[0:3] == '%XP'):
                 if tok == '%XP':        # just '%XP': ignore this token but process rest of line
                     pass
                 elif tok == '%XPCUT': 	# gobble tokens to %XPTUC
+                    self.debug('processing %XPCUT segment')
                     self.get_tokens_to_match(['%XPTUC'], mode='all')
                 elif tok == '%XPVERB':  # copy tokens verbatim to %XPBREV
+                    self.debug('processing %XPVERB segment')
                     toks = self.get_tokens_to_match(['%XPBREV'], mode='all')
                     if self.copyText:
                         for tok in toks:
@@ -1298,6 +1300,7 @@ xpander.debugLevel = args.debug
 xpander.expandMacros = args.expand_macros
 xpander.expandRefs = args.expand_refs
 xpander.readLabels = args.expand_refs
+xpander.readExternalLabels = args.expand_refs
 xpander.expandCites = args.expand_cites
 xpander.readCites = args.expand_cites
 xpander.readMacros = args.macros
