@@ -1,157 +1,207 @@
-.\" Manpage for xpandlatex
-.TH man 1 "19 Apr 2016" "1.0" "xpandlatex man page"
+.TH "XPANDLATEX" "1" "" "" ""
 .SH NAME
+.PP
 xpandlatex \- expand LaTeX elements
 .SH SYNOPSIS
-xpandlatex [flags] [-m macro_file] ... file
+.PP
+\f[C]xpandlatex\f[] [flags] [\-m macro_file] ...
+file
 .SH OPTIONS
 .TP
-.B  -h, --help
+.B \-h, \-\-help
 show a help message and exit
+.RS
+.RE
 .TP
-.B -D #                  
+.B \-D #
 set debug level
+.RS
+.RE
 .TP
-.B -x, --expand-macros   
+.B \-x, \-\-expand\-macros
 expand macros [default]
+.RS
+.RE
 .TP
-.B -X, --no-expand-macros                        
+.B \-X, \-\-no\-expand\-macros
 don't expand macros
+.RS
+.RE
 .TP
-.B -r, --expand-refs
+.B \-r, \-\-expand\-refs
 expand \\refs (to sections, figures, equations etc.)
+.RS
+.RE
 .TP
-.B -R, --no-expand-refs  
+.B \-R, \-\-no\-expand\-refs
 don't expand \\refs [default]
+.RS
+.RE
 .TP
-.B -b, --expand-cites    
+.B \-b, \-\-expand\-cites
 expand bibliography \\cite, \\citep, \\citet etc.
+.RS
+.RE
 .TP
-.B -B, --no-expand-cites
+.B \-B, \-\-no\-expand\-cites
 don't expand cites [default]
+.RS
+.RE
 .TP
-.B  --macros
+.B \-\-macros
 read macro definitions that appear in main file
+.RS
+.RE
 .TP
-.B --no-macros
+.B \-\-no\-macros
 don't read macros in main file [default]
+.RS
+.RE
 .TP
-.B  --includes
-include \input files [default]
+.B \-\-includes
+include input files [default]
+.RS
+.RE
 .TP
-.B  --no-includes
+.B \-\-no\-includes
 don't include inputs
+.RS
+.RE
 .TP
-.BR  -m " <file>", " " --macro-file " <file>"
+.B \-m <file>, \-\-macro\-file <file>
 read macros from file
-.\" ---------------------------------------------------------------------------------
+.RS
+.RE
 .SH DESCRIPTION
-.B xpandlatex
-processes a LaTeX file in order to:
 .PP
-- expand locally defined macros
-.br
-- replace \\refs with corresponding targets
-.br
-- replace \\cite* with citation targets 
-.br
-- include files as directed by
-.RS
-- \\include{file}
-.br
-- \\tableofcontents
-.br
-- \\listoffigures
-.br
-- \\listoftables
-.br
-- \\bibliography{}
-.RE
-.br
-- interpret special commands beginning with '%XP'
-.\" ---------------------------------------------------------------------------------
+\f[C]xpandlatex\f[] processes a LaTeX file to do the following
+.IP \[bu] 2
+expand locally defined macros
+.IP \[bu] 2
+replace \\refs with corresponding targets
+.IP \[bu] 2
+replace \\cite* with citation targets
+.IP \[bu] 2
+include files as directed by: \\include{file}, \\tableofcontents,
+\\listoffigures, \\listoftables, \\bibliography{}
+.IP \[bu] 2
+interpret special commands beginning with '%XP'
+.SS Macro handling
+.PP
+Macros may be defined with \f[C]\\def\f[], \f[C]\\newcommand\f[] or
+\f[C]\\renewcommand\f[].
+See also environments below.
+.SS Label/ref handling
+.PP
+Label definitions are read from the aux file, and \f[C]\\refs\f[]
+expanded.
+References to labels in other files are also expanded correctly by
+following \f[C]\\externaldocument[prefix]{file}\f[] commands (see
+\f[C]xr.sty\f[]).
 .SS Citation handling
-xpandlatex replaces
-.RS
 .PP
+\f[C]xpandlatex\f[] replaces
+.IP
+.nf
+\f[C]
 \\citetype[opt1][opt2]{key1,key2}
-.RE
+\f[]
+.fi
 .PP
 by
+.IP
+.nf
+\f[C]
+[(][opt1\ ]\\XPcitetype{expansion1},\ \\XPcitetype{expansion2}[\ opt2][)]
+\f[]
+.fi
 .PP
-.RS
-[(][opt1 ]\\XPcitetype{expansion1}, \\XPcitetype{expansion2}[ opt2][)] 
-.RE
-.PP
-where \\citetype may be \\cite or else \\citep, \\citet, \\citealt or
-\\citeauthor for natbib citations.  The expansion (at least using
-natbib with apalike.bst) has 4 parts, and the \\XPcitetype macros
-should be defined to handle them correctly. The following should work:
-.PP
-.RS
+where \\citetype may be plain \\cite or natbib \\citep, \\citet,
+\\citealt or \\citeauthor.
+The expansion (at least using natbib with apalike.bst) has 4 parts, and
+the \\XPcitetype macros should be defined to handle them correctly.
+The following should work:
+.IP
+.nf
+\f[C]
 \\newcommand{\\XPcite}[4]{#1}
-.br
-\\newcommand{\\XPcitep}[4]{#3 #2}
-.br
-\\newcommand{\\XPcitet}[4]{#3 (#2)}
-.br
-\\newcommand{\\XPcitealt}[4]{#3 #2}
-.br
+\\newcommand{\\XPcitep}[4]{#3\ #2}
+\\newcommand{\\XPcitet}[4]{#3\ (#2)}
+\\newcommand{\\XPcitealt}[4]{#3\ #2}
 \\newcommand{\\XPciteauthor}[4]{#3}
-.RE
+\f[]
+.fi
 .PP
 The opening delimeters are chosen appropriately for the citation type,
-and cannot currently be altered. 
+and cannot currently be altered.
 .PP
 If only one optional argument appears it is assumed to be a postfix
 rather than prefix.
-.\" ---------------------------------------------------------------------------------
 .SS %XP directives
-The LaTeX file may contain special tokens that begin with '%XP' that
-are interpreted by
-xpandlatex
-but ignored (along with the rest of the line) by the LaTeX
-compiler. Currently available specials are:
-.TP 
+.PP
+The LaTeX file may contain special tokens that begin with '%XP' that are
+interpreted by xpandlatex but ignored (along with the rest of the line)
+by the LaTeX compiler.
+Currently available specials are:
+.TP
 .B %XP
-Ignore the special, but process the rest of the line.  
+Ignore the special, but process the rest of the line.
+.RS
+.RE
 .TP
 .B %XPCUT ... %XPTUC
 Ignore everything (including multiple lines, which may or may not be
-commented) between the tokens.  Cannot be nested.
+commented) between the tokens.
+Cannot be nested.
+.RS
+.RE
+.TP
+.B %XPVERB ... %XPBREV
+Copy everything (comments, %XP specials, warts and all) to the output
+without performing any expansions.
+Cannot be nested.
+.RS
+.RE
 .PP
 Thus, in the code
-.RS
-	%XP \\def\\foo{bar} % latex doesn't see this
-.br
-	%XPCUT
-.br
-	\\def\\bar{foo} % xpandlatex doesn't see this
-.br
-	%XPTUC
-.RE
-the \\foo macro definition will be seen by 
-xpandlatex
-but not by LaTeX; while the \\bar macro definition will be seen by
-LaTeX but not by 
-xpandlatex.
-Note the use of % on the %XP line: if omitted the words would be
-copied uncommented to the 
-xpandlatex
-output.
+.IP
+.nf
+\f[C]
+\ %XP\ \\def\\foo{bar}\ %\ latex\ doesn't\ see\ this
+\ %XPCUT
+\ \\def\\bar{foo}\ %\ xpandlatex\ doesn't\ see\ this
+\ %XPTUC
+\ %XPVERB%XPCUT\ won\[aq]t\ be\ cut\ %XPTUC%XPBREV
+\ 
+\f[]
+.fi
+.PP
+the \\foo macro definition will be seen by xpandlatex but not by LaTeX;
+while the \\bar macro definition will be seen by LaTeX but not by
+xpandlatex, while the text "\f[C]%XPCUT\ won\[aq]t\ be\ cut\ %XPTUC\f[]"
+will be copied unchanged.
+.PP
+Note the use of % on the %XP line: if omitted the words would be copied
+uncommented to the xpandlatex output.
+.PP
+Note also that %XP specials that appear in comments will not be
+interepreted, and those in macro definitions will not be interpreted
+until the macro is expanded.
 .PP
 See also environment handling specials below.
-.\" ---------------------------------------------------------------------------------
 .SS Environment handling
-xpandlatex interprets and expands \\newenvironment and
-\\renewenvironment commands.  It can also interpret a special
-\\XPenvironment command to execute special actions on the 
-.B body 
-of  a LaTeX environment.  The definition takes the form:
 .PP
-.RS
-\\XPenvironment{name}{begin code}{end code}{body actions}
-.RE
+xpandlatex interprets and expands \\newenvironment and
+\\renewenvironment commands.
+It can also interpret a special \\XPenvironment command to execute
+special actions on the \f[B]body\f[] of a LaTeX environment.
+The definition takes the form:
+.IP
+.nf
+\f[C]
+\\XPenvironment{name}{begin\ code}{end\ code}{body\ actions}
+\f[]
+.fi
 .PP
 The {name}, {begin code} and {end code} are as for \\newenvironment;
 except that a special '##' parameter is replaced by xpandlatex's count
@@ -160,37 +210,44 @@ The final argument may contain the following special symbols:
 .TP
 .B %XPcopy
 Copy out (and interpret) the body as usual
+.RS
+.RE
 .TP
 .B %XPdiscard
 Discard the body completely
-.B %XPwritefile
-Write the body to a file called 'name_##.tex', where ## is
-xpandlatex's count for the number of times this environment has been
-encountered.  Note this is
-.B not
-a LaTeX counter, and so will not be affected by LaTeX commands such as
-\\setcounter.  The body is not copied to the main output.
+.RS
+.RE
+.TP
+.B XPwritefile
+Write the body to a file called 'name_##.tex', where ## is xpandlatex's
+count for the number of times this environment has been encountered.
+Note this is \f[B]not\f[] a LaTeX counter, and so will not be affected
+by LaTeX commands such as \\setcounter.
+The body is not copied to the main output.
+.RS
+.RE
 .PP
 Multiple body actions may appear: so {%XPwritefile %XPcopy} will copy
 the body both to the main output and a separate file.
 .PP
 For example:
-.RS
+.IP
+.nf
+\f[C]
+\\XPenvironment{figure}\ 
+{\\begin{center}[Figure\ ##\ about\ here]\\end{center}}\ 
+{}\ 
+{%XPwritefile}
+\f[]
+.fi
 .PP
-	\\XPenvironment{figure}
-.br
-              {\\begin{center}[Figure ## about here]\\end{center}}
-.br
-              {}
-.br
-              {%XPwritefile}
-.RE
-.PP
-writes figure contents to 'figure_1.tex' etc, placing marker text in
-the output.
-.\".SH SEE ALSO
-.\" useradd(8), passwd(5), nuseradd.debian(8)
+writes figure contents to 'figure_1.tex' etc, placing marker text in the
+main output stream.
 .SH BUGS
-No known bugs, but that's not saying much.
+.PP
+It does what I need, but has not been tested widely
 .SH AUTHOR
-Maneesh Sahani (maneesh+xpandlatex@gatsby.ucl.ac.uk)
+.PP
+Maneesh Sahani (xpandlatex\@users.github.com)
+.SH AUTHORS
+April 2016.
