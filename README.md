@@ -43,10 +43,10 @@ xpandlatex - expand LaTeX elements
 `xpandlatex` processes a LaTeX file to do the following
 
 - expand locally defined macros 
-- replace \\refs with corresponding targets
-- replace \\cite\* with citation targets
-- include files as directed by: \\include{file}, \\tableofcontents,
-  \\listoffigures, \\listoftables, \\bibliography{}
+- replace `\ref`s with corresponding targets
+- replace `\cite`\* with citation targets
+- include files as directed by: `\include{file}`, `\tableofcontents`,
+  `\listoffigures`, `\listoftables`, `\bibliography{}`
 - interpret special commands beginning with ’%XP’
 
 
@@ -57,7 +57,7 @@ See also environments below.
 
 ##Label/ref handling
 
-Label definitions are read from the aux file, and `\refs` expanded.
+Label definitions are read from the aux file, and `\ref`s expanded.
 References to labels in other files are also expanded correctly by
 following `\externaldocument[prefix]{file}` commands (see `xr.sty`).
 
@@ -70,9 +70,9 @@ by
 ```
 [(][opt1 ]\XPcitetype{expansion1}, \XPcitetype{expansion2}[ opt2][)]
 ```
-where \\citetype may be plain \\cite or natbib \\citep, \\citet,
-\\citealt or \\citeauthor. The expansion (at least using natbib with
-apalike.bst) has 4 parts, and the \\XPcitetype macros should be
+where `\citetype` may be plain `\cite` or natbib `\citep`, `\citet`,
+`\citealt` or `\citeauthor`. The expansion (at least using natbib with
+apalike.bst) has 4 parts, and the `\XPcitetype` macros should be
 defined to handle them correctly. The following should work:
 ```
 \newcommand{\XPcite}[4]{#1}
@@ -113,9 +113,9 @@ Thus, in the code
  %XPVERB%XPCUT won't be cut %XPTUC%XPBREV
  
 ```
-the \\foo macro definition will be seen by xpandlatex but not by LaTeX;
-while the \\bar macro definition will be seen by LaTeX but not by
-xpandlatex, while the text "`%XPCUT won't be cut %XPTUC`" will be
+the `\foo` macro definition will be seen by xpandlatex but not by LaTeX;
+the `\bar` macro definition will be seen by LaTeX but not by
+xpandlatex; and the text "`%XPCUT won't be cut %XPTUC`" will be
 copied unchanged.
 
 Note the use of % on the %XP line: if omitted the words
@@ -128,17 +128,17 @@ until the macro is expanded.
 See also environment handling specials below.
 
 ##Environment handling
- xpandlatex interprets and expands \\newenvironment and
-\\renewenvironment commands. It can also interpret a special
-\\XPenvironment command to execute special actions on the **body** of a
-LaTeX environment. The definition takes the form:
-```
-\XPenvironment{name}{begin code}{end code}{body actions}
-```
-The {name}, {begin code} and {end code} are as for \\newenvironment;
-except that a special ’\#\#’ parameter is replaced by xpandlatex’s count
-of the number of times this environment has been called. The final
-argument may contain the following special symbols: 
+xpandlatex reads `\newenvironment` and `\renewenvironment`
+commands, and expands corresponding `\begin{env}...\end{env}` code.
+It can also interpret a special `\XPenvironment` command to
+execute special actions on the **body** of a LaTeX environment. The
+definition takes the form:
+``` \XPenvironment{name}{begin code}{end code}{body actions} ```
+The `{name}`, `{begin code}` and `{end code}` are as
+for `\newenvironment`; except that a special ’\#\#’ parameter is
+replaced by xpandlatex’s count of the number of times this environment
+has been called. The final argument may contain the following special
+symbols:
 
 %XPcopy
 :	Copy out (and interpret) the body as usual
@@ -146,14 +146,14 @@ argument may contain the following special symbols:
 %XPdiscard
 :	Discard the body completely 
 
-XPwritefile
+%XPwritefile
 : 	Write the body to a file called ’name\_\#\#.tex’, where \#\# is
 	xpandlatex’s count for the number of times this environment
 	has been encountered. Note this is **not** a LaTeX counter,
 	and so will not be affected by LaTeX commands such as
-	\\setcounter. The body is not copied to the main output.
+	`\setcounter`. The body is not copied to the main output.
 
-Multiple body actions may appear: so {%XPwritefile %XPcopy} will copy
+Multiple body actions may appear: so `{%XPwritefile %XPcopy}` will copy
 the body both to the main output and a separate file.
 
 For example:
