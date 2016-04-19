@@ -1,0 +1,196 @@
+.\" Manpage for xpandlatex
+.TH man 1 "19 Apr 2016" "1.0" "xpandlatex man page"
+.SH NAME
+xpandlatex \- expand LaTeX elements
+.SH SYNOPSIS
+xpandlatex [flags] [-m macro_file] ... file
+.SH OPTIONS
+.TP
+.B  -h, --help
+show a help message and exit
+.TP
+.B -D #                  
+set debug level
+.TP
+.B -x, --expand-macros   
+expand macros [default]
+.TP
+.B -X, --no-expand-macros                        
+don't expand macros
+.TP
+.B -r, --expand-refs
+expand \\refs (to sections, figures, equations etc.)
+.TP
+.B -R, --no-expand-refs  
+don't expand \\refs [default]
+.TP
+.B -b, --expand-cites    
+expand bibliography \\cite, \\citep, \\citet etc.
+.TP
+.B -B, --no-expand-cites
+don't expand cites [default]
+.TP
+.B  --macros
+read macro definitions that appear in main file
+.TP
+.B --no-macros
+don't read macros in main file [default]
+.TP
+.B  --includes
+include \input files [default]
+.TP
+.B  --no-includes
+don't include inputs
+.TP
+.BR  -m " <file>", " " --macro-file " <file>"
+read macros from file
+.\" ---------------------------------------------------------------------------------
+.SH DESCRIPTION
+.B xpandlatex
+processes a LaTeX file in order to:
+.PP
+- expand locally defined macros
+.br
+- replace \\refs with corresponding targets
+.br
+- replace \\cite* with citation targets 
+.br
+- include files as directed by
+.RS
+- \\include{file}
+.br
+- \\tableofcontents
+.br
+- \\listoffigures
+.br
+- \\listoftables
+.br
+- \\bibliography{}
+.RE
+.br
+- interpret special commands beginning with '%XP'
+.\" ---------------------------------------------------------------------------------
+.SS Citation handling
+xpandlatex replaces
+.RS
+.PP
+\\citetype[opt1][opt2]{key1,key2}
+.RE
+.PP
+by
+.PP
+.RS
+[(][opt1 ]\\XPcitetype{expansion1}, \\XPcitetype{expansion2}[ opt2][)] 
+.RE
+.PP
+where \\citetype may be \\cite or else \\citep, \\citet, \\citealt or
+\\citeauthor for natbib citations.  The expansion (at least using
+natbib with apalike.bst) has 4 parts, and the \\XPcitetype macros
+should be defined to handle them correctly. The following should work:
+.PP
+.RS
+\\newcommand{\\XPcite}[4]{#1}
+.br
+\\newcommand{\\XPcitep}[4]{#3 #2}
+.br
+\\newcommand{\\XPcitet}[4]{#3 (#2)}
+.br
+\\newcommand{\\XPcitealt}[4]{#3 #2}
+.br
+\\newcommand{\\XPciteauthor}[4]{#3}
+.RE
+.PP
+The opening delimeters are chosen appropriately for the citation type,
+and cannot currently be altered. 
+.PP
+If only one optional argument appears it is assumed to be a postfix
+rather than prefix.
+.\" ---------------------------------------------------------------------------------
+.SS %XP directives
+The LaTeX file may contain special tokens that begin with '%XP' that
+are interpreted by
+xpandlatex
+but ignored (along with the rest of the line) by the LaTeX
+compiler. Currently available specials are:
+.TP 
+.B %XP
+Ignore the special, but process the rest of the line.  
+.TP
+.B %XPCUT ... %XPTUC
+Ignore everything (including multiple lines, which may or may not be
+commented) between the tokens.  Cannot be nested.
+.PP
+Thus, in the code
+.RS
+	%XP \\def\\foo{bar} % latex doesn't see this
+.br
+	%XPCUT
+.br
+	\\def\\bar{foo} % xpandlatex doesn't see this
+.br
+	%XPTUC
+.RE
+the \\foo macro definition will be seen by 
+xpandlatex
+but not by LaTeX; while the \\bar macro definition will be seen by
+LaTeX but not by 
+xpandlatex.
+Note the use of % on the %XP line: if omitted the words would be
+copied uncommented to the 
+xpandlatex
+output.
+.PP
+See also environment handling specials below.
+.\" ---------------------------------------------------------------------------------
+.SS Environment handling
+xpandlatex interprets and expands \\newenvironment and
+\\renewenvironment commands.  It can also interpret a special
+\\XPenvironment command to execute special actions on the 
+.B body 
+of  a LaTeX environment.  The definition takes the form:
+.PP
+.RS
+\\XPenvironment{name}{begin code}{end code}{body actions}
+.RE
+.PP
+The {name}, {begin code} and {end code} are as for \\newenvironment;
+except that a special '##' parameter is replaced by xpandlatex's count
+of the number of times this environment has been called.
+The final argument may contain the following special symbols:
+.TP
+.B %XPcopy
+Copy out (and interpret) the body as usual
+.TP
+.B %XPdiscard
+Discard the body completely
+.B %XPwritefile
+Write the body to a file called 'name_##.tex', where ## is
+xpandlatex's count for the number of times this environment has been
+encountered.  Note this is
+.B not
+a LaTeX counter, and so will not be affected by LaTeX commands such as
+\\setcounter.  The body is not copied to the main output.
+.PP
+Multiple body actions may appear: so {%XPwritefile %XPcopy} will copy
+the body both to the main output and a separate file.
+.PP
+For example:
+.RS
+.PP
+	\\XPenvironment{figure}
+.br
+              {\\begin{center}[Figure ## about here]\\end{center}}
+.br
+              {}
+.br
+              {%XPwritefile}
+.RE
+.PP
+writes figure contents to 'figure_1.tex' etc, placing marker text in
+the output.
+.\".SH SEE ALSO
+.\" useradd(8), passwd(5), nuseradd.debian(8)
+.SH BUGS
+No known bugs, but that's not saying much.
+.SH AUTHOR
+Maneesh Sahani (maneesh+xpandlatex@gatsby.ucl.ac.uk)
