@@ -1173,7 +1173,11 @@ class XpandLaTeX:
                     pass
                 elif tok == '%XPCUT': 	# gobble tokens to %XPTUC
                     self.get_tokens_to_match(['%XPTUC'], mode='all')
-
+                elif tok == '%XPVERB':  # copy tokens verbatim to %XPBREV
+                    toks = self.get_tokens_to_match(['%XPBREV'], mode='all')
+                    if self.copyText:
+                        for tok in toks:
+                            self.put_token(tok)
                 # comments
             elif (tok[0] == '%'):
                 if self.copyComments: self.put_token(tok)
