@@ -159,9 +159,9 @@ It can also interpret a special `\XPenvironment` command to
 execute special actions on the **body** of a LaTeX environment. The
 definition takes the form:
 ``` 
-\XPenvironment{name}{begin code}{end code}{body actions} 
+\XPenvironment{envname}{begin code}{end code}{body actions} 
 ```
-The `{name}`, `{begin code}` and `{end code}` are as
+The `{envname}`, `{begin code}` and `{end code}` are as
 for `\newenvironment`; except that a special ’\#\#’ parameter is
 replaced by xpandlatex’s count of the number of times this environment
 has been called. The final argument may contain the following special
@@ -170,18 +170,22 @@ symbols:
 %XPcopy
 :	Copy out (and interpret) the body as usual
 
+%XPverbatim
+:	(Note: **not** %XPVERB) Copy out the body but do not interpret
+
 %XPdiscard
 :	Discard the body completely 
 
 %XPwritefile
-: 	Write the body to a file called ’name\_\#\#.tex’, where \#\# is
-	xpandlatex’s count for the number of times this environment
-	has been encountered. Note this is **not** a LaTeX counter,
+: 	Write the body to a file called ’envname\_\#\#.tex’, where \#\# is
+	xpandlatex’s count for the number of times the `envname` environment
+	has been encountered. Note that this is **not** a LaTeX counter,
 	and so will not be affected by LaTeX commands such as
 	`\setcounter`. The body is not copied to the main output.
 
-Multiple body actions may appear: so `{%XPwritefile %XPcopy}` will copy
-the body both to the main output and a separate file.
+Multiple body actions may appear: so `{%XPcopy %XPwritefile}` will copy
+the body both to the main output and a separate file; and `{%XPcopy
+%XPcopy}` will copy it twice.
 
 For example:
 ```
@@ -196,41 +200,42 @@ the main output stream.
 #EXAMPLES
 
 ##Extracting floats 
-The file `paper.tex` contains figures within floats and no
-`\listoffigures`.  We wish to extract each figure to its own file, and
+The file `paper.tex` contains figures within float environments and no
+`\listoffigures`.  We need to extract each figure to its own file, and
 add a list of figure legends to the end of the file, without affecting
 the LaTeX output from `paper.tex` itself.
 
-As `paper.tex` has no `\listoffigures` command this operation must be
-performed in two stages.  We add this code to paper.tex:
+As `paper.tex` has no `\listoffigures` command, the operation must be
+performed in two stages.  We add this code (invisible to LaTeX) to paper.tex:
 ```
-%% near the beginning of the file:
+%% in the preamble
 %XPVERB
 %XP \XPenvironment{figure}{\begin{center}[Figure ## about here]\end{center}}{}{%XPwritefile}
 %XPBREV
 
-%% near the end of the file:
+%% and near the end of the file:
 %% Double-wrap listoffigures for xpandlatex.  
 %XPVERB\def\listfigurename{Figure Legends}%XPBREV
 %XPVERB\listoffigures%XPBREV
 ```
 
-Then run: (a Makefile may be useful)
+We then run: (a Makefile may be useful)
 ```
 xpandlatex -X off -M off paper.tex > paper-int.tex
 [pdf]latex paper-int.tex
-xpandlatex -m -T on paper-lof.tex > paper-fin.tex
+xpandlatex -m -T on paper-int.tex > paper-fin.tex
 ```
 The first `xpandlatex` call does nothing except strip the `%%XPVERB`
-environments, exposing the `%XP` line and the `\listoffigures`
-commands.  The LaTeX compile creates the `.lof` file.  The final
-`xpandlatex` call includes this into the output.  It also processes the
-\XPenvironment define protected by `%XP` (note the `-m` flag) and
-splits the figures into individual files.  This environment definition
-could also be placed in a helper 'macro' file and included with the
-`-f` flag instead. 
+environments, exposing the `%XP` line at the top and the
+`\listoffigures` commands near the end.  The LaTeX compile creates the `.lof` file.
+The final `xpandlatex` call includes this into the output.  It also
+processes the \XPenvironment define protected by `%XP` (note the `-m`
+flag) and splits the figures into individual files.  If other macros
+within `paper.tex` are not to be expanded then this environment
+definition can be placed in a helper 'macro' file and included
+using the `-f` flag in the second `xplatex` call instead.
 
-To compile the figures create a wrapper file `fig_wrapper.tex`:
+To compile the figures, we create a wrapper file `fig_wrapper.tex`:
 ```
 \documentclass{article} 
 
@@ -259,10 +264,10 @@ figure_*.pdf: %.pdf: %.tex figure_wrapper.tex
 	pdflatex -jobname $* figure_wrapper.tex
 ```
 
-If the final xpanded LaTeX file is to be processed by `pandoc(1)` then
-it may be useful to add the following code to `paper.tex` (or,
-unprotected, to the macro file) as `pandoc` seems not to
-understand LaTeX TOC commands:
+If the final xpanded LaTeX file is to be further processed by
+`pandoc(1)` then it may be useful to add the following commands to
+`paper.tex` (or, unprotected, to the macro file) as `pandoc` seems not
+to understand LaTeX TOC format commands:
 ```
 %XPVERB
 %XP \newcommand{\XPlofbegin}{\begin{description}}

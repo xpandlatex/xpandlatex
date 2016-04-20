@@ -104,6 +104,12 @@ class XpandLaTeX:
         print(tok, end='', file=self.outputFile)
         
 
+    # put_tokens(tok) -- send a list of tokens to output stream
+
+    def put_tokens(self, toks):
+        for tok in toks:
+            self.put_token(tok);
+
 
     # push_tokens(tokens) - re-buffer tokens to be read again by later get_token calls.  
     # 
@@ -1031,6 +1037,9 @@ class XpandLaTeX:
             if tok == r'%XPcopy':
                 self.push_tokens(body)
 
+            if tok == r'%XPverbatim':
+                if self.copyText: self.put_tokens(body)
+
             if tok == r'%XPdiscard':
                 pass
 
@@ -1183,9 +1192,7 @@ class XpandLaTeX:
                 elif tok == '%XPVERB':  # copy tokens verbatim to %XPBREV
                     self.debug('processing %XPVERB segment')
                     toks = self.get_tokens_to_match(['%XPBREV'], mode='all')
-                    if self.copyText:
-                        for tok in toks:
-                            self.put_token(tok)
+                    if self.copyText: self.put_tokens(toks)
                 # comments
             elif (tok[0] == '%'):
                 if self.copyComments: self.put_token(tok)

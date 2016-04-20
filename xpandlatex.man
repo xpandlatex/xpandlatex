@@ -228,18 +228,23 @@ The definition takes the form:
 .IP
 .nf
 \f[C]
-\\XPenvironment{name}{begin\ code}{end\ code}{body\ actions}\ 
+\\XPenvironment{envname}{begin\ code}{end\ code}{body\ actions}\ 
 \f[]
 .fi
 .PP
-The \f[C]{name}\f[], \f[C]{begin\ code}\f[] and \f[C]{end\ code}\f[] are
-as for \f[C]\\newenvironment\f[]; except that a special '##' parameter
-is replaced by xpandlatex's count of the number of times this
+The \f[C]{envname}\f[], \f[C]{begin\ code}\f[] and \f[C]{end\ code}\f[]
+are as for \f[C]\\newenvironment\f[]; except that a special '##'
+parameter is replaced by xpandlatex's count of the number of times this
 environment has been called.
 The final argument may contain the following special symbols:
 .TP
 .B %XPcopy
 Copy out (and interpret) the body as usual
+.RS
+.RE
+.TP
+.B %XPverbatim
+(Note: \f[B]not\f[] %XPVERB) Copy out the body but do not interpret
 .RS
 .RE
 .TP
@@ -249,16 +254,18 @@ Discard the body completely
 .RE
 .TP
 .B %XPwritefile
-Write the body to a file called 'name_##.tex', where ## is xpandlatex's
-count for the number of times this environment has been encountered.
-Note this is \f[B]not\f[] a LaTeX counter, and so will not be affected
-by LaTeX commands such as \f[C]\\setcounter\f[].
+Write the body to a file called 'envname_##.tex', where ## is
+xpandlatex's count for the number of times the \f[C]envname\f[]
+environment has been encountered.
+Note that this is \f[B]not\f[] a LaTeX counter, and so will not be
+affected by LaTeX commands such as \f[C]\\setcounter\f[].
 The body is not copied to the main output.
 .RS
 .RE
 .PP
-Multiple body actions may appear: so \f[C]{%XPwritefile\ %XPcopy}\f[]
-will copy the body both to the main output and a separate file.
+Multiple body actions may appear: so \f[C]{%XPcopy\ %XPwritefile}\f[]
+will copy the body both to the main output and a separate file; and
+\f[C]{%XPcopy\ %XPcopy}\f[] will copy it twice.
 .PP
 For example:
 .IP
@@ -276,51 +283,54 @@ main output stream.
 .SH EXAMPLES
 .SS Extracting floats
 .PP
-The file \f[C]paper.tex\f[] contains figures within floats and no
-\f[C]\\listoffigures\f[].
-We wish to extract each figure to its own file, and add a list of figure
+The file \f[C]paper.tex\f[] contains figures within float environments
+and no \f[C]\\listoffigures\f[].
+We need to extract each figure to its own file, and add a list of figure
 legends to the end of the file, without affecting the LaTeX output from
 \f[C]paper.tex\f[] itself.
 .PP
-As \f[C]paper.tex\f[] has no \f[C]\\listoffigures\f[] command this
+As \f[C]paper.tex\f[] has no \f[C]\\listoffigures\f[] command, the
 operation must be performed in two stages.
-We add this code to paper.tex:
+We add this code (invisible to LaTeX) to paper.tex:
 .IP
 .nf
 \f[C]
-%%\ near\ the\ beginning\ of\ the\ file:
+%%\ in\ the\ preamble
 %XPVERB
 %XP\ \\XPenvironment{figure}{\\begin{center}[Figure\ ##\ about\ here]\\end{center}}{}{%XPwritefile}
 %XPBREV
 
-%%\ near\ the\ end\ of\ the\ file:
+%%\ and\ near\ the\ end\ of\ the\ file:
 %%\ Double\-wrap\ listoffigures\ for\ xpandlatex.\ \ 
 %XPVERB\\def\\listfigurename{Figure\ Legends}%XPBREV
 %XPVERB\\listoffigures%XPBREV
 \f[]
 .fi
 .PP
-Then run: (a Makefile may be useful)
+We then run: (a Makefile may be useful)
 .IP
 .nf
 \f[C]
 xpandlatex\ \-X\ off\ \-M\ off\ paper.tex\ >\ paper\-int.tex
 [pdf]latex\ paper\-int.tex
-xpandlatex\ \-m\ \-T\ on\ paper\-lof.tex\ >\ paper\-fin.tex
+xpandlatex\ \-m\ \-T\ on\ paper\-int.tex\ >\ paper\-fin.tex
 \f[]
 .fi
 .PP
 The first \f[C]xpandlatex\f[] call does nothing except strip the
-\f[C]%%XPVERB\f[] environments, exposing the \f[C]%XP\f[] line and the
-\f[C]\\listoffigures\f[] commands.
+\f[C]%%XPVERB\f[] environments, exposing the \f[C]%XP\f[] line at the
+top and the \f[C]\\listoffigures\f[] commands near the end.
 The LaTeX compile creates the \f[C]\&.lof\f[] file.
 The final \f[C]xpandlatex\f[] call includes this into the output.
 It also processes the define protected by \f[C]%XP\f[] (note the
 \f[C]\-m\f[] flag) and splits the figures into individual files.
-This environment definition could also be placed in a helper
-\[aq]macro\[aq] file and included with the \f[C]\-f\f[] flag instead.
+If other macros within \f[C]paper.tex\f[] are not to be expanded then
+this environment definition can be placed in a helper \[aq]macro\[aq]
+file and included using the \f[C]\-f\f[] flag in the second
+\f[C]xplatex\f[] call instead.
 .PP
-To compile the figures create a wrapper file \f[C]fig_wrapper.tex\f[]:
+To compile the figures, we create a wrapper file
+\f[C]fig_wrapper.tex\f[]:
 .IP
 .nf
 \f[C]
@@ -356,10 +366,10 @@ figure_*.pdf:\ %.pdf:\ %.tex\ figure_wrapper.tex
 \f[]
 .fi
 .PP
-If the final xpanded LaTeX file is to be processed by \f[C]pandoc(1)\f[]
-then it may be useful to add the following code to \f[C]paper.tex\f[]
-(or, unprotected, to the macro file) as well as \f[C]pandoc\f[] seems
-not to understand TOC commands:
+If the final xpanded LaTeX file is to be further processed by
+\f[C]pandoc(1)\f[] then it may be useful to add the following commands
+to \f[C]paper.tex\f[] (or, unprotected, to the macro file) as
+\f[C]pandoc\f[] seems not to understand LaTeX TOC format commands:
 .IP
 .nf
 \f[C]
@@ -373,7 +383,7 @@ not to understand TOC commands:
 .fi
 .SH BUGS
 .PP
-It does what I need, but has not been tested widely
+It does what I need today, but has not been tested widely
 .SH AUTHOR
 .PP
 Maneesh Sahani (xpandlatex \@github)
