@@ -805,11 +805,11 @@ class XpandLaTeX:
 
 
 
-    # read_input() - read a \input file
+    # merge_input() - read a \input file
     #
     # triggered by reading \input: filename still on stream
 
-    def read_input(self):
+    def merge_input(self):
         
         # get the filename
         tok = self.get_token('parsing')
@@ -821,7 +821,7 @@ class XpandLaTeX:
         self.update_definitions(file_xpander)
 
     
-    # read_contentsfile(type) - read a toc/lof/lot file
+    # merge_tocs(type) - read a toc/lof/lot file
     #
     # Pushes the section header (as defined by article.cls);   
 
@@ -830,7 +830,7 @@ class XpandLaTeX:
     contentsOpenMacro  = {'toc': '\XPtocbegin', 'lof': '\XPlofbegin', 'lot': '\XPlotbegin'}
     contentsCloseMacro = {'toc': '\XPtocend', 'lof': '\XPlofend', 'lot': '\XPlotend'}
     
-    def read_contentsfile(self, type="toc"):
+    def merge_tocs(self, type="toc"):
 
         # delay processing any remaining pushed tokens
         saveTokenBuffer = self.tokenBuffer
@@ -863,13 +863,13 @@ class XpandLaTeX:
 
 
 
-    # read_bibliography_bbl() - read bibliography
+    # merge_bbl() - read bibliography
     #
     # differs from contents files in:
     #  1. need to gobble .bib file names
     #  2. no \section or \begin\end wrapper (.bbl includes thebibliography env already)
 
-    def read_bibliography_bbl(self):
+    def merge_bbl(self):
     
         # gobble the (unwanted) bibfile names
         tok = self.get_token('parsing')
@@ -1060,8 +1060,9 @@ class XpandLaTeX:
     copyComments = False
 
     readAuxFile = True                  # do read aux files
-    readInputFiles = False              # don't read input files 
-    readBibliography = True             # do read bbl 
+    mergeInputs = False              # don't read input files 
+    mergeTOCs = True                 # do read .toc etc.
+    mergeBBL = True             # do read bbl 
 
     def process_defaults(self, type="tex"):
         if type == "tex":
@@ -1071,7 +1072,11 @@ class XpandLaTeX:
             self.readMacros = True
             self.copyText = False
             self.copyComments = False
+
             self.readAuxFile = False
+            self.mergeInputs = False
+            self.mergeTOCs = False
+            self.mergeBBL = False
 
         elif type == "aux":
             self.expandMacros = False
@@ -1089,8 +1094,9 @@ class XpandLaTeX:
             self.copyComments = False
 
             self.readAuxFile = False
-            self.readInputFiles = False
-            self.readBibliography = False
+            self.mergeInputs = False
+            self.mergeTOCs = False
+            self.mergeBBL = False
 
         elif type == "bbl":
             pass
@@ -1147,25 +1153,25 @@ class XpandLaTeX:
             elif self.readCites and tok == r'\bibcite':
                 self.define_bibcite()
                 
-                # read \input files
-            elif self.readInputFiles and tok == r'\input':
-                self.read_input()
+                # merge \input files
+            elif self.mergeInputs and tok == r'\input':
+                self.merge_input()
 
-                # include bibliography
-            elif self.readBibliography and tok == r'\bibliography':
-                self.read_bibliography_bbl()
+                # merge bibliography
+            elif self.mergeBBL and tok == r'\bibliography':
+                self.merge_bbl()
 
-                # include tableofcontents
-            elif self.expandMacros and tok == r'\tableofcontents':
-                self.read_contentsfile('toc')
+                # merge tableofcontents
+            elif self.mergeTOCs and tok == r'\tableofcontents':
+                self.merge_tocs('toc')
 
-                # include listoffigures
-            elif self.expandMacros and tok == r'\listoffigures':
-                self.read_contentsfile('lof')
+                # merge listoffigures
+            elif self.mergeTOCs and tok == r'\listoffigures':
+                self.merge_tocs('lof')
 
-                # include listoftables
-            elif self.expandMacros and tok == r'\listoftables':
-                self.read_contentsfile('lot')
+                # merge listoftables
+            elif self.mergeTOCs and tok == r'\listoftables':
+                self.merge_tocs('lot')
 
                 # %XP tokens
             elif (len(tok) >= 3) and (tok[0:3] == '%XP'):
@@ -1231,93 +1237,140 @@ class XpandLaTeX:
         if len(input_name):
             self.open_input(input_name)
         if copy is not None:
-            self.readMacros         = copy.readMacros
-            self.expandMacros       = copy.expandMacros
-            self.readLabels         = copy.readLabels         
-            self.readLabelPrefix    = copy.readLabelPrefix    
-            self.expandRefs         = copy.expandRefs         
-            self.readExternalLabels = copy.readExternalLabels 
-            self.readCites          = copy.readCites          
-            self.expandCites        = copy.expandCites        
-            self.copyText           = copy.copyText           
-            self.copyComments       = copy.copyComments       
-            self.readAuxFile        = copy.readAuxFile        
-            self.readInputFiles     = copy.readInputFiles     
-            self.readBibliography   = copy.readBibliography   
-            
-            self.outputFileName     = copy.outputFileName
-            self.outputFile         = copy.outputFile
-
-            self.debugLevel         = copy.debugLevel
-            self.debugFile          = copy.debugFile
+            self.readMacros         	= copy.readMacros
+            self.expandMacros       	= copy.expandMacros
+            self.readLabels         	= copy.readLabels         
+            self.readLabelPrefix    	= copy.readLabelPrefix    
+            self.expandRefs         	= copy.expandRefs         
+            self.readExternalLabels 	= copy.readExternalLabels 
+            self.readCites          	= copy.readCites          
+            self.expandCites        	= copy.expandCites        
+            self.copyText           	= copy.copyText           
+            self.copyComments       	= copy.copyComments       
+            self.readAuxFile        	= copy.readAuxFile        
+            self.mergeInputs	    	= copy.mergeInputs     
+            self.mergeTOCs 	    	= copy.mergeTOCs
+            self.mergeBBL   	= copy.mergeBBL   
+                                    	
+            self.outputFileName     	= copy.outputFileName
+            self.outputFile         	= copy.outputFile
+                                    	
+            self.debugLevel         	= copy.debugLevel
+            self.debugFile          	= copy.debugFile
 
             self.update_definitions(copy)
 
 ###############################################################################
 ## MAIN:
 
-argparser = argparse.ArgumentParser(description='expand LaTeX elements')
+argparser = argparse.ArgumentParser(description='expand LaTeX elements', 
+                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 argparser.add_argument('files', metavar='<file>', nargs='+',
                   help='file to process');
+
+
+## build up a standard on/off argument format
+def onoffkw(default, help):
+    kwargs = {'choices':['on', 'off'], 'const':'on', 'nargs':'?', 'metavar':'on|off'}
+    kwargs['default'] = default;
+    kwargs['help'] = help;
+    return kwargs
+
+
+argparser.add_argument('-x', '--expand-macros', 
+                       **onoffkw('on', 'expand macros'))
+
+argparser.add_argument('-r', '--expand-refs',   
+                       **onoffkw('off','expand \\refs'))
+
+argparser.add_argument('-b', '--expand-cites',  
+                       **onoffkw('off','expand bibliography \\cite, \\citep, \\citet ...'))
+
+
+argparser.add_argument('-m', '--read-macros', 
+                       **onoffkw('off', 'read macro definitions that appear in main file'))
+
+
+argparser.add_argument('-X', '--expand-all', 
+                       **onoffkw(None, 'control all expansion (overrides individual flags'))
+
+
+argparser.add_argument('-I', '--merge-inputs', 
+                       **onoffkw('off', 'merge \\input files'))
+
+argparser.add_argument('-T', '--merge-tocs', 
+                       **onoffkw('off', 'merge <name>.{toc,lof,lot}'))
+
+argparser.add_argument('-B', '--merge-bibliography',
+                       **onoffkw('off','merge compiled bibliography from <name>.bbl'))
+
+argparser.add_argument('-M', '--merge-all', 
+                       **onoffkw(None, 'control all merges (overrides individual flags)'))
+
+
+
+
+argparser.add_argument('-f', '--macro-file', action='append', default=[], metavar="<file>",
+                  help='read macros from file')
+
 argparser.add_argument('-D', dest='debug', type=int, default=0, metavar="#",
                   help='debug level')
-
-argparser.add_argument('-x', '--expand-macros', action='store_true', default=True, 
-                       help='expand macros [default]')
-argparser.add_argument('-X', '--no-expand-macros', dest='expand_macros', action='store_false',
-                       help="don't expand macros") 
-
-argparser.add_argument('-r', '--expand-refs', action='store_true', default=False, 
-                       help='expand \\refs (to sections, figures, equations etc.)')
-argparser.add_argument('-R', '--no-expand-refs', dest='expand_refs', action='store_false',
-                       help="don't expand \\refs [default]")
-
-argparser.add_argument('-b', '--expand-cites', action='store_true', default=False, 
-                       help='expand bibliography \\cite, \\citep, \\citet etc.')
-argparser.add_argument('-B', '--no-expand-cites', dest='expand_cites', action='store_false',
-                       help="don't expand cites [default]")
-
-
-argparser.add_argument('--macros', action='store_true', default=False,
-                       help='read macro definitions that appear in main file')
-argparser.add_argument('--no-macros', action='store_false', dest='macros',
-                       help="don't read macros in main file [default]")
-
-argparser.add_argument('--includes', action='store_true', default=True,
-                       help='include \\input files [default]')
-argparser.add_argument('--no-includes', action='store_false', dest='includes',
-                       help="don't include inputs")
-
-
-argparser.add_argument('-m', '--macro-file', action='append', default=[], metavar="<file>",
-                  help='read macros from file')
 
 
 args = argparser.parse_args()
 
-xpander = XpandLaTeX()
-xpander.debugLevel = args.debug
-xpander.expandMacros = args.expand_macros
-xpander.expandRefs = args.expand_refs
-xpander.readLabels = args.expand_refs
-xpander.readExternalLabels = args.expand_refs
-xpander.expandCites = args.expand_cites
-xpander.readCites = args.expand_cites
-xpander.readMacros = args.macros
-xpander.readInputFiles = args.includes
+
+xp = XpandLaTeX()
+xp.debugLevel = args.debug
+
+if args.expand_all is not None:
+    xp.expandMacros = (args.expand_all == 'on')
+    xp.expandRefs = (args.expand_all == 'on')
+    xp.expandCites = (args.expand_all == 'on')
+else:
+    xp.expandMacros = (args.expand_macros == 'on')
+    xp.expandRefs = (args.expand_refs == 'on')
+    xp.expandCites = (args.expand_cites == 'on')
+
+
+xp.readMacros = (args.read_macros == 'on')
+xp.readLabels = xp.expandRefs   # read labels iff expanding refs
+xp.readExternalLabels = xp.expandRefs
+xp.readCites = xp.expandCites   # read \bibcite iff expanding cites
+
+if args.merge_all is not None:
+    xp.mergeInputs = (args.merge_all == 'on')
+    xp.mergeTOCs = (args.merge_all == 'on')
+    xp.mergeBBL = (args.merge_all == 'on')
+else:
+    xp.mergeInputs = (args.merge_inputs == 'on')
+    xp.mergeTOCs = (args.merge_tocs == 'on')
+    xp.mergeBBL = (args.merge_bibliography == 'on')
+
+
+if args.debug:
+    print ('expandMacros = ', xp.expandMacros);
+    print ('expandRefs = ', xp.expandRefs);
+    print ('expandCites = ', xp.expandCites);
+    print ('readMacros = ', xp.readMacros);
+    print ('mergeInputs = ', xp.mergeInputs);
+    print ('mergeTOCs = ', xp.mergeTOCs);
+    print ('mergeBBL = ', xp.mergeBBL);
+
+
 
 for file in args.macro_file:
-    macro_xpander = XpandLaTeX(copy=xpander)
-    macro_xpander.process_file(file, type="macro")
-    xpander.update_definitions(macro_xpander)
+    macro_xp = XpandLaTeX(copy=xp)
+    macro_xp.process_file(file, type="macro")
+    xp.update_definitions(macro_xp)
     
 for file in args.files:
     if re.fullmatch(r'.*\.aux', file):
-        xpander.process_file(file, type="aux")
+        xp.process_file(file, type="aux")
     elif re.fullmatch(r'.*\.cfg', file):
-        xpander.process_file(file, type="macro")
+        xp.process_file(file, type="macro")
     elif re.fullmatch(r'.*\.tex', file):
-        xpander.process_file(file, type="tex")
+        xp.process_file(file, type="tex")
 
 
              

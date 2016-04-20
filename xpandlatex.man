@@ -4,12 +4,65 @@
 xpandlatex \- expand LaTeX elements
 .SH SYNOPSIS
 .PP
-\f[C]xpandlatex\f[] [flags] [\-m macro_file] ...
+\f[C]xpandlatex\f[] [flags] [\-f macro_file] ...
 file
 .SH OPTIONS
+.PP
+An [on|off] switch with no argument turns the function on.
 .TP
 .B \-h, \-\-help
 show a help message and exit
+.RS
+.RE
+.TP
+.B \-x [on|off], \-\-expand\-macros [on|off]
+expand macros (default: on)
+.RS
+.RE
+.TP
+.B \-r [on|off], \-\-expand\-refs [on|off]
+expand \\refs (default: off)
+.RS
+.RE
+.TP
+.B \-b [on|off], \-\-expand\-cites [on|off]
+expand bibliography \\cite, \\citep, \\citet ...
+(default: off)
+.RS
+.RE
+.TP
+.B \-m [on|off], \-\-read\-macros [on|off]
+read macro definitions that appear in main file (default: off)
+.RS
+.RE
+.TP
+.B \-X [on|off], \-\-expand\-all [on|off]
+control all expansion (overrides individual flags)
+.RS
+.RE
+.TP
+.B \-I [on|off], \-\-merge\-inputs [on|off]
+merge \\input files (default: off)
+.RS
+.RE
+.TP
+.B \-T [on|off], \-\-merge\-tocs [on|off]
+merge .{toc,lof,lot} (default: off)
+.RS
+.RE
+.TP
+.B \-B [on|off], \-\-merge\-bibliography [on|off]
+merge compiled bibliography from .bbl (default: off)
+.RS
+.RE
+.TP
+.B \-M [on|off], \-\-merge\-all [on|off]
+control all merges (overrides individual flags)
+.RS
+.RE
+.TP
+.B \-f <file>, \-\-macro\-file <file>
+read macros from file
 .RS
 .RE
 .TP
@@ -17,90 +70,40 @@ show a help message and exit
 set debug level
 .RS
 .RE
-.TP
-.B \-x, \-\-expand\-macros
-expand macros [default]
-.RS
-.RE
-.TP
-.B \-X, \-\-no\-expand\-macros
-don't expand macros
-.RS
-.RE
-.TP
-.B \-r, \-\-expand\-refs
-expand \\refs (to sections, figures, equations etc.)
-.RS
-.RE
-.TP
-.B \-R, \-\-no\-expand\-refs
-don't expand \\refs [default]
-.RS
-.RE
-.TP
-.B \-b, \-\-expand\-cites
-expand bibliography \\cite, \\citep, \\citet etc.
-.RS
-.RE
-.TP
-.B \-B, \-\-no\-expand\-cites
-don't expand cites [default]
-.RS
-.RE
-.TP
-.B \-\-macros
-read macro definitions that appear in main file
-.RS
-.RE
-.TP
-.B \-\-no\-macros
-don't read macros in main file [default]
-.RS
-.RE
-.TP
-.B \-\-includes
-include input files [default]
-.RS
-.RE
-.TP
-.B \-\-no\-includes
-don't include inputs
-.RS
-.RE
-.TP
-.B \-m <file>, \-\-macro\-file <file>
-read macros from file
-.RS
-.RE
 .SH DESCRIPTION
 .PP
-\f[C]xpandlatex\f[] processes a LaTeX file to do the following
+\f[C]xpandlatex\f[] processes a LaTeX file to do some or all of the
+following
 .IP \[bu] 2
-expand locally defined macros
+expand locally or externally defined macros
 .IP \[bu] 2
-replace \\refs with corresponding targets
+replace \f[C]\\ref\f[]s with corresponding targets
 .IP \[bu] 2
-replace \\cite* with citation targets
+replace \f[C]\\cite\f[]* with citation targets
 .IP \[bu] 2
-include files as directed by: \\include{file}, \\tableofcontents,
-\\listoffigures, \\listoftables, \\bibliography{}
+include files as directed by: \f[C]\\include{file}\f[],
+\f[C]\\tableofcontents\f[], \f[C]\\listoffigures\f[],
+\f[C]\\listoftables\f[], \f[C]\\bibliography{}\f[]
 .IP \[bu] 2
 interpret special commands beginning with '%XP'
 .SS Macro handling
 .PP
 Macros may be defined with \f[C]\\def\f[], \f[C]\\newcommand\f[] or
 \f[C]\\renewcommand\f[].
+Definitions in the main file are only read with the \f[C]\-m\f[] switch.
+Definitions may also be provided from other files using \f[C]\-f\f[].
+.PP
 See also environments below.
 .SS Label/ref handling
 .PP
-Label definitions are read from the aux file, and \f[C]\\refs\f[]
-expanded.
+With the \f[C]\-r\f[] switch, label definitions are read from the aux
+file, and \f[C]\\ref\f[]s expanded.
 References to labels in other files are also expanded correctly by
-following \f[C]\\externaldocument[prefix]{file}\f[] commands (see
+following any \f[C]\\externaldocument[prefix]{file}\f[] commands (see
 \f[C]xr.sty\f[]).
 .SS Citation handling
 .PP
-\f[C]xpandlatex\f[] replaces
+With the \f[C]\-b\f[] switch \f[C]xpandlatex\f[] replaces
 .IP
 .nf
 \f[C]
@@ -108,7 +111,7 @@ following \f[C]\\externaldocument[prefix]{file}\f[] commands (see
 \f[]
 .fi
 .PP
-by
+with
 .IP
 .nf
 \f[C]
@@ -116,11 +119,13 @@ by
 \f[]
 .fi
 .PP
-where \\citetype may be plain \\cite or natbib \\citep, \\citet,
-\\citealt or \\citeauthor.
+where \f[C]\\citetype\f[] may be plain \f[C]\\cite\f[] or natbib
+\f[C]\\citep\f[], \f[C]\\citet\f[], \f[C]\\citealt\f[] or
+\f[C]\\citeauthor\f[].
 The expansion (at least using natbib with apalike.bst) has 4 parts, and
-the \\XPcitetype macros should be defined to handle them correctly.
-The following should work:
+the \f[C]\\XPcitetype\f[] macros should be defined to handle them
+correctly.
+The following commands work for the natbib/apalike combination:
 .IP
 .nf
 \f[C]
@@ -136,7 +141,30 @@ The opening delimeters are chosen appropriately for the citation type,
 and cannot currently be altered.
 .PP
 If only one optional argument appears it is assumed to be a postfix
-rather than prefix.
+rather than prefix, as in natbib.
+.SS Merging files
+.PP
+With \f[C]\-I\f[], \f[C]xpandlatex\f[] will merge any external files
+referenced by \f[C]\\input{file}\f[].
+.PP
+With \f[C]\-T\f[], \f[C]xpandlatex\f[] will include \f[C]\&.toc\f[],
+\f[C]\&.lof\f[] and \f[C]\&.lot\f[] files in place of the respective
+commands \f[C]\\tableofcontents\f[], \f[C]\\listoffigures\f[] and
+\f[C]\\listoftables\f[] which cause LaTeX to generate them.
+An appropriate \f[C]\\section*{\\namemacro}\f[] line is inserted.
+The special macros \f[C]\\XPtocbegin\f[] and \f[C]\\XPtocend\f[], if
+defined, will be expanded before and after the
+\f[C]\\tableofcontents\f[] inclusion, but after the
+\f[C]\\section{}\f[].
+Similar macros work for \[aq]lof\[aq] and \[aq]lot\[aq].
+.PP
+With \f[C]\-B\f[], \f[C]xpandlatex\f[] will include the contents of a
+bibtex\-generated \f[C]\&.bbl\f[] file in place of
+\f[C]\\bibliography{database.bib}\f[].
+It does not read the \f[C]\&.bib\f[] file itself.
+No special \f[C]\\begin\f[]/\f[C]\\end\f[] macros are expanded: the
+\f[C]{thebibliography}\f[] environment within the \f[C]\&.bbl\f[] file
+can be redefined instead.
 .SS %XP directives
 .PP
 The LaTeX file may contain special tokens that begin with '%XP' that are
@@ -176,10 +204,10 @@ Thus, in the code
 \f[]
 .fi
 .PP
-the \\foo macro definition will be seen by xpandlatex but not by LaTeX;
-while the \\bar macro definition will be seen by LaTeX but not by
-xpandlatex, while the text "\f[C]%XPCUT\ won\[aq]t\ be\ cut\ %XPTUC\f[]"
-will be copied unchanged.
+the \f[C]\\foo\f[] macro definition will be seen by xpandlatex but not
+by LaTeX; the \f[C]\\bar\f[] macro definition will be seen by LaTeX but
+not by xpandlatex; and the text
+"\f[C]%XPCUT\ won\[aq]t\ be\ cut\ %XPTUC\f[]" will be copied unchanged.
 .PP
 Note the use of % on the %XP line: if omitted the words would be copied
 uncommented to the xpandlatex output.
@@ -191,21 +219,23 @@ until the macro is expanded.
 See also environment handling specials below.
 .SS Environment handling
 .PP
-xpandlatex interprets and expands \\newenvironment and
-\\renewenvironment commands.
-It can also interpret a special \\XPenvironment command to execute
-special actions on the \f[B]body\f[] of a LaTeX environment.
+xpandlatex reads \f[C]\\newenvironment\f[] and
+\f[C]\\renewenvironment\f[] commands, and expands corresponding
+\f[C]\\begin{env}...\\end{env}\f[] code.
+It can also interpret a special \f[C]\\XPenvironment\f[] command to
+execute special actions on the \f[B]body\f[] of a LaTeX environment.
 The definition takes the form:
 .IP
 .nf
 \f[C]
-\\XPenvironment{name}{begin\ code}{end\ code}{body\ actions}
+\\XPenvironment{name}{begin\ code}{end\ code}{body\ actions}\ 
 \f[]
 .fi
 .PP
-The {name}, {begin code} and {end code} are as for \\newenvironment;
-except that a special '##' parameter is replaced by xpandlatex's count
-of the number of times this environment has been called.
+The \f[C]{name}\f[], \f[C]{begin\ code}\f[] and \f[C]{end\ code}\f[] are
+as for \f[C]\\newenvironment\f[]; except that a special '##' parameter
+is replaced by xpandlatex's count of the number of times this
+environment has been called.
 The final argument may contain the following special symbols:
 .TP
 .B %XPcopy
@@ -218,17 +248,17 @@ Discard the body completely
 .RS
 .RE
 .TP
-.B XPwritefile
+.B %XPwritefile
 Write the body to a file called 'name_##.tex', where ## is xpandlatex's
 count for the number of times this environment has been encountered.
 Note this is \f[B]not\f[] a LaTeX counter, and so will not be affected
-by LaTeX commands such as \\setcounter.
+by LaTeX commands such as \f[C]\\setcounter\f[].
 The body is not copied to the main output.
 .RS
 .RE
 .PP
-Multiple body actions may appear: so {%XPwritefile %XPcopy} will copy
-the body both to the main output and a separate file.
+Multiple body actions may appear: so \f[C]{%XPwritefile\ %XPcopy}\f[]
+will copy the body both to the main output and a separate file.
 .PP
 For example:
 .IP
@@ -243,11 +273,107 @@ For example:
 .PP
 writes figure contents to 'figure_1.tex' etc, placing marker text in the
 main output stream.
+.SH EXAMPLES
+.SS Extracting floats
+.PP
+The file \f[C]paper.tex\f[] contains figures within floats and no
+\f[C]\\listoffigures\f[].
+We wish to extract each figure to its own file, and add a list of figure
+legends to the end of the file, without affecting the LaTeX output from
+\f[C]paper.tex\f[] itself.
+.PP
+As \f[C]paper.tex\f[] has no \f[C]\\listoffigures\f[] command this
+operation must be performed in two stages.
+We add this code to paper.tex:
+.IP
+.nf
+\f[C]
+%%\ near\ the\ beginning\ of\ the\ file:
+%XPVERB
+%XP\ \\XPenvironment{figure}{\\begin{center}[Figure\ ##\ about\ here]\\end{center}}{}{%XPwritefile}
+%XPBREV
+
+%%\ near\ the\ end\ of\ the\ file:
+%%\ Double\-wrap\ listoffigures\ for\ xpandlatex.\ \ 
+%XPVERB\\def\\listfigurename{Figure\ Legends}%XPBREV
+%XPVERB\\listoffigures%XPBREV
+\f[]
+.fi
+.PP
+Then run: (a Makefile may be useful)
+.IP
+.nf
+\f[C]
+xpandlatex\ \-X\ off\ \-M\ off\ paper.tex\ >\ paper\-int.tex
+[pdf]latex\ paper\-int.tex
+xpandlatex\ \-m\ \-T\ on\ paper\-lof.tex\ >\ paper\-fin.tex
+\f[]
+.fi
+.PP
+The first \f[C]xpandlatex\f[] call does nothing except strip the
+\f[C]%%XPVERB\f[] environments, exposing the \f[C]%XP\f[] line and the
+\f[C]\\listoffigures\f[] commands.
+The LaTeX compile creates the \f[C]\&.lof\f[] file.
+The final \f[C]xpandlatex\f[] call includes this into the output.
+It also processes the define protected by \f[C]%XP\f[] (note the
+\f[C]\-m\f[] flag) and splits the figures into individual files.
+This environment definition could also be placed in a helper
+\[aq]macro\[aq] file and included with the \f[C]\-f\f[] flag instead.
+.PP
+To compile the figures create a wrapper file \f[C]fig_wrapper.tex\f[]:
+.IP
+.nf
+\f[C]
+\\documentclass{article}\ 
+
+%%\ include\ packages\ needed\ for\ graphics
+\\usepackage{graphicx,tikz}\ 
+
+%%\ remove\ figure\ captions
+\\usepackage{caption}
+\\DeclareCaptionFormat{blank}{}
+\\captionsetup[figure]{format=blank}
+
+%%\ no\ page\ numbers
+\\pagestyle{empty}
+
+\\begin{document}
+\\begin{figure}
+\ \ \\input{\\jobname}
+\\end{figure}
+\\end{document}
+\f[]
+.fi
+.PP
+and use the following Makefile rule to compile:
+.IP
+.nf
+\f[C]
+figures:\ figure_*.pdf\ 
+
+figure_*.pdf:\ %.pdf:\ %.tex\ figure_wrapper.tex
+\ \ \ \ pdflatex\ \-jobname\ $*\ figure_wrapper.tex
+\f[]
+.fi
+.PP
+If the final xpanded LaTeX file is to be processed by \f[C]pandoc(1)\f[]
+then it may be useful to add the following code to \f[C]paper.tex\f[]
+(or, unprotected, to the macro file) as well as \f[C]pandoc\f[] seems
+not to understand TOC commands:
+.IP
+.nf
+\f[C]
+%XPVERB
+%XP\ \\newcommand{\\XPlofbegin}{\\begin{description}}
+%XP\ \\newcommand{\\contentsline}[3]{#2\\par}
+%XP\ \\newcommand{\\numberline}[1]{\\item[Figure\ #1]}
+%XP\ \\newcommand{\\XPlofend}{\\end{description}}
+%XPBREV
+\f[]
+.fi
 .SH BUGS
 .PP
 It does what I need, but has not been tested widely
 .SH AUTHOR
 .PP
-Maneesh Sahani (xpandlatex\@users.github.com)
-.SH AUTHORS
-April 2016.
+Maneesh Sahani (xpandlatex \@github)
